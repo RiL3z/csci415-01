@@ -59,21 +59,21 @@ __global__ void sine_parallel(float *input, float *output) {
   // the thread id of the current thread that is running this kernel
   int idx = threadIdx.x;
   // fetch ith number in the input array
-  float value = input[i]; 
+  float value = input[idx]; 
   // multiply the number by 3 initially
-  float numer = value * value * value; 
+  float numer = input[idx] * input[idx] * input[idx]; 
   int denom = 6; // 3! 
   int sign = -1; 
   // this loops TERMS number of times
   for (int j=1; j<=TERMS;j++) 
   { 
     value += sign * numer / denom; 
-    numer *= input[i] * input[i]; 
+    numer *= input[idx] * input[idx]; 
     denom *= (2*j+2) * (2*j+3); 
     sign *= -1; 
   }
   // write out the result into the output array 
-  output[i] = value;   
+  output[idx] = value;   
 }
 
 // BEGIN: timing and error checking routines (do not modify)
