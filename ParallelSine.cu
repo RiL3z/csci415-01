@@ -24,16 +24,22 @@ static const int N = 12345678;
 // Number of terms to use when approximating sine
 static const int TERMS = 6;
 
+// need a better understanding of this algorithm for computing sine
 // kernel function (CPU - Do not modify)
 void sine_serial(float *input, float *output)
 {
+  // loop counter
   int i;
 
+  // iterate as many times as there are numbers to work on
   for (i=0; i<N; i++) {
+      // fetch ith number in the input array
       float value = input[i]; 
+      // multiply the number by 3 initially
       float numer = input[i] * input[i] * input[i]; 
       int denom = 6; // 3! 
       int sign = -1; 
+      // this loops TERMS number of times
       for (int j=1; j<=TERMS;j++) 
       { 
          value += sign * numer / denom; 
@@ -48,6 +54,9 @@ void sine_serial(float *input, float *output)
 
 // kernel function (CUDA device)
 // TODO: Implement your graphics kernel here. See assignment instructions for method information
+void sine_parallel(float *input, float *output) {
+
+}
 
 // BEGIN: timing and error checking routines (do not modify)
 
