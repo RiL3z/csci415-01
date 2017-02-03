@@ -2,8 +2,7 @@
 // Assignment 1: ParallelSine
 // CSCI 415: Networking and Parallel Computation
 // Spring 2017
-// Name(s): 
-// Kelan Riley
+// Name(s): Kelan Riley
 // Sine implementation derived from slides here: http://15418.courses.cs.cmu.edu/spring2016/lecture/basicarch
 
 
@@ -54,8 +53,27 @@ void sine_serial(float *input, float *output)
 
 // kernel function (CUDA device)
 // TODO: Implement your graphics kernel here. See assignment instructions for method information
-void sine_parallel(float *input, float *output) {
-
+// need to tell cuda that this is a kernel to run... need special syntax here...
+//__global__ is the syntax for doing that, the below code will run on threads executing in the GPU
+__global__ void sine_parallel(float *input, float *output) {
+  // the thread id of the current thread that is running this kernel
+  int idx = threadIdx.x;
+  // fetch ith number in the input array
+  float value = input[i]; 
+  // multiply the number by 3 initially
+  float numer = value * value * value; 
+  int denom = 6; // 3! 
+  int sign = -1; 
+  // this loops TERMS number of times
+  for (int j=1; j<=TERMS;j++) 
+  { 
+    value += sign * numer / denom; 
+    numer *= input[i] * input[i]; 
+    denom *= (2*j+2) * (2*j+3); 
+    sign *= -1; 
+  }
+  // write out the result into the output array 
+  output[i] = value;   
 }
 
 // BEGIN: timing and error checking routines (do not modify)
