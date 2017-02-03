@@ -3,7 +3,7 @@
 // CSCI 415: Networking and Parallel Computation
 // Spring 2017
 // Name(s): 
-//
+// Kelan Riley
 // Sine implementation derived from slides here: http://15418.courses.cs.cmu.edu/spring2016/lecture/basicarch
 
 
@@ -16,6 +16,9 @@
 #include <sys/time.h>
 
 // problem size (vector length) N
+// remember that a vector is just a series of values that we'd like to refer to
+// as one thing, so we can refer to the whole series by just saying the word
+// vector
 static const int N = 12345678;
 
 // Number of terms to use when approximating sine
