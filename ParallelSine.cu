@@ -154,7 +154,10 @@ int main (int argc, char **argv)
   // now actually allocate GPU memory for input and output
   cudaMalloc((void **) &d_in, (N*sizeof(float)));
   cudaMalloc((void **) &d_out, (N*sizeof(float)));
- 
+
+  // the second thing to do would be to copy the input array over into the gpu memory
+  cudaMemcpy(d_in, h_input, (N*sizeof(float)), cudaMemcpyHostToDevice); 
+
   // Checking to make sure the CPU and GPU results match - Do not modify
   int errorCount = 0;
   for (i=0; i<N; i++)
