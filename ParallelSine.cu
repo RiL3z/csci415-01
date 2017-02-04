@@ -18,7 +18,7 @@
 // remember that a vector is just a series of values that we'd like to refer to
 // as one thing, so we can refer to the whole series by just saying the word
 // vector
-static const int N = 12345678;
+static const int N = 16777216;
 
 // Number of terms to use when approximating sine
 static const int TERMS = 6;
@@ -58,7 +58,8 @@ void sine_serial(float *input, float *output)
 __global__ void sine_parallel(float *input, float *output) {
   // the thread id of the current thread that is running this kernel
   // threadIdx is a dim3 structure with x, y, and z fields (up to three dimensions)
-  int idx = threadIdx.x;
+  // make sure to compute the idx as the block number offset by the thread id in the block!
+  int idx = blockIdx.x * 256 + threadIdx.x;
   // fetch ith number in the input array
   float value = input[idx]; 
   // multiply the number by 3 initially
@@ -169,11 +170,13 @@ int main (int argc, char **argv)
   long long kernel_start_time = start_timer(); 
   // now I think I'm ready to launch the kernel on the GPU
   // my original call was faulty since I can't run more than 1024 threads per block!
-  sine_parallel<<<1, N>>>(d_in, d_out);
-  // checking to see if there were any errors running the kernel
-  checkErrors("kernel error:");
-  long long kernel_time = stop_timer(kernel_start_time, "GPU Kernel Run Time");
   
+  sine_parallel<<<32768, 512>>>(d_in, d_out);
+  // checking to see that there were no errors with the kernel parameters when it got launched
+  long long kernel_time = stop_timer(kernel_start_time, "GPU Kernel Run Time");
+  // checking to see that there were no errors with the kernel parameters when it got launched
+  checkErrors("");
+
   // time how long it takes to copy the results on the GPU back onto the CPU
   long long device_to_host_start_time = start_timer(); 
   // now copy the results on the GPU memory to CPU memory
