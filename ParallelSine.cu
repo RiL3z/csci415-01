@@ -154,18 +154,35 @@ int main (int argc, char **argv)
   // insert some timing code now
   long long GPU_memory_allocation_start_time = start_timer(); 
   // now actually allocate GPU memory for input and output
-  cudaMalloc((void **) &d_in, (N*sizeof(float)));
+  cudaMalloc((void **) &d_in, (N*sizeof(float))); 
+   
   cudaMalloc((void **) &d_out, (N*sizeof(float)));
   long long GPU_memory_allocation_time = stop_timer(GPU_memory_allocation_start_time, "\nGPU Memory Allocation"); 
 
+  // time the memory copy to device
+  long long host_to_device_start_time = start_timer(); 
   // the second thing to do would be to copy the input array over into the gpu memory
   cudaMemcpy(d_in, h_input, (N*sizeof(float)), cudaMemcpyHostToDevice); 
-  
-  //now I think I'm ready to launch the kernel on the GPU
-  sine_parallel<<<1, N>>>(d_in, d_out);
+  long long host_to_device_time = stop_timer(host_to_device_start_time, "GPU Memory Copy to Device");
 
+  // time how long it takes for the kernel to run
+  long long kernel_start_time = start_timer(); 
+  // now I think I'm ready to launch the kernel on the GPU
+  // my original call was faulty since I can't run more than 1024 threads per block!
+  sine_parallel<<<1, N>>>(d_in, d_out);
+  // checking to see if there were any errors running the kernel
+  checkErrors("kernel error:");
+  long long kernel_time = stop_timer(kernel_start_time, "GPU Kernel Run Time");
+  
+  // time how long it takes to copy the results on the GPU back onto the CPU
+  long long device_to_host_start_time = start_timer(); 
   // now copy the results on the GPU memory to CPU memory
   cudaMemcpy(h_gpu_result, d_out, (N*sizeof(float)), cudaMemcpyDeviceToHost); 
+  long long device_to_host_time = stop_timer(device_to_host_start_time, "GPU Memory Copy to Host");
+  
+  // get the total time on the GPU
+  long long total_time = stop_timer(GPU_memory_allocation_start_time, "Total GPU Run Time");
+  std::cout << "\n";
   // Checking to make sure the CPU and GPU results match - Do not modify
   int errorCount = 0;
   for (i=0; i<N; i++)
@@ -182,6 +199,10 @@ int main (int argc, char **argv)
   free(h_input);
   free(h_cpu_result);
   free(h_gpu_result);
+
+  // make sure to free the memory on the GPU too!
+  cudaFree(d_in);
+  cudaFree(d_out);
   return 0;
 }
 
