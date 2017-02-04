@@ -157,7 +157,12 @@ int main (int argc, char **argv)
 
   // the second thing to do would be to copy the input array over into the gpu memory
   cudaMemcpy(d_in, h_input, (N*sizeof(float)), cudaMemcpyHostToDevice); 
+  
+  //now I think I'm ready to launch the kernel on the GPU
+  sine_parallel<<<1, N>>>(d_in, d_out);
 
+  // now copy the results on the GPU memory to CPU memory
+  cudaMemcpy(h_gpu_result, d_out, (N*sizeof(float)), cudaMemcpyDeviceToHost); 
   // Checking to make sure the CPU and GPU results match - Do not modify
   int errorCount = 0;
   for (i=0; i<N; i++)
