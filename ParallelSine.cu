@@ -57,6 +57,7 @@ void sine_serial(float *input, float *output)
 //__global__ is the syntax for doing that, the below code will run on threads executing in the GPU
 __global__ void sine_parallel(float *input, float *output) {
   // the thread id of the current thread that is running this kernel
+  // threadIdx is a dim3 structure with x, y, and z fields (up to three dimensions)
   int idx = threadIdx.x;
   // fetch ith number in the input array
   float value = input[idx]; 
@@ -143,8 +144,17 @@ int main (int argc, char **argv)
 
 
   //TODO: Prepare and run your kernel, make sure to copy your results back into h_gpu_result and display your timing results
+  // allocating the results array on the host (cpu)
   float *h_gpu_result = (float*)malloc(N*sizeof(float));
 
+  // declare two pointers to memory on the GPU
+  float *d_in;
+  float *d_out;
+
+  // now actually allocate GPU memory for input and output
+  cudaMalloc((void **) &d_in, (N*sizeof(float)));
+  cudaMalloc((void **) &d_out, (N*sizeof(float)));
+ 
   // Checking to make sure the CPU and GPU results match - Do not modify
   int errorCount = 0;
   for (i=0; i<N; i++)
