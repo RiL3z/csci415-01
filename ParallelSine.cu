@@ -150,10 +150,13 @@ int main (int argc, char **argv)
   // declare two pointers to memory on the GPU
   float *d_in;
   float *d_out;
-
+  
+  // insert some timing code now
+  long long GPU_memory_allocation_start_time = start_timer(); 
   // now actually allocate GPU memory for input and output
   cudaMalloc((void **) &d_in, (N*sizeof(float)));
   cudaMalloc((void **) &d_out, (N*sizeof(float)));
+  long long GPU_memory_allocation_time = stop_timer(GPU_memory_allocation_start_time, "\nGPU Memory Allocation"); 
 
   // the second thing to do would be to copy the input array over into the gpu memory
   cudaMemcpy(d_in, h_input, (N*sizeof(float)), cudaMemcpyHostToDevice); 
