@@ -59,7 +59,7 @@ __global__ void sine_parallel(float *input, float *output) {
   // the thread id of the current thread that is running this kernel
   // threadIdx is a dim3 structure with x, y, and z fields (up to three dimensions)
   // make sure to compute the idx as the block number offset by the thread id in the block!
-  int idx = blockIdx.x * 256 + threadIdx.x;
+  int idx = blockIdx.x * 1024 + threadIdx.x;
   // fetch ith number in the input array
   float value = input[idx]; 
   // multiply the number by 3 initially
