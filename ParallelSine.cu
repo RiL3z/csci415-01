@@ -18,7 +18,7 @@
 // remember that a vector is just a series of values that we'd like to refer to
 // as one thing, so we can refer to the whole series by just saying the word
 // vector
-static const int N = 16777216;
+static const int N = 134215680;
 
 // Number of terms to use when approximating sine
 static const int TERMS = 6;
@@ -127,6 +127,11 @@ void checkErrors(const char label[])
 
 int main (int argc, char **argv)
 {
+  // first I'm going to save the total number of bytes this array takes up in a variable
+  int total_array_bytes = N * sizeof(float);
+  int half_size = N / 2;
+  int half_array_bytes = half_size * sizeof(float);
+
   //BEGIN: CPU implementation (do not modify)
   float *h_cpu_result = (float*)malloc(N*sizeof(float));
   float *h_input = (float*)malloc(N*sizeof(float));
@@ -146,24 +151,38 @@ int main (int argc, char **argv)
 
   //TODO: Prepare and run your kernel, make sure to copy your results back into h_gpu_result and display your timing results
   // allocating the results array on the host (cpu)
-  float *h_gpu_result = (float*)malloc(N*sizeof(float));
+  float *h_gpu_result = (float*)malloc(total_array_bytes);
 
-  // declare two pointers to memory on the GPU
-  float *d_in;
-  float *d_out;
-  
+  // declare 4 pointers (because 2 devices) to memory on the GPU
+  float *d_in_1;
+  float *d_out_1;
+  float *d_out_2;
+  float *d_in_2;
+ 
+  // explicitly set which device is being used 
+  cudaSetDevice(0);
   // insert some timing code now
   long long GPU_memory_allocation_start_time = start_timer(); 
   // now actually allocate GPU memory for input and output
-  cudaMalloc((void **) &d_in, (N*sizeof(float))); 
+  cudaMalloc((void **) &d_in_1, half_array_bytes); 
    
-  cudaMalloc((void **) &d_out, (N*sizeof(float)));
+  cudaMalloc((void **) &d_out_1, half_array_bytes);
+
+  // using the second device because why not
+  cudaSetDevice(1);
+  cudaMalloc((void **) &d_in_2, half_array_bytes);
+  cudaMalloc((void **) &d_out_2, half_array_bytes);
+ 
   long long GPU_memory_allocation_time = stop_timer(GPU_memory_allocation_start_time, "\nGPU Memory Allocation"); 
 
-  // time the memory copy to device
+  // time the memory copy to devices
   long long host_to_device_start_time = start_timer(); 
-  // the second thing to do would be to copy the input array over into the gpu memory
-  cudaMemcpy(d_in, h_input, (N*sizeof(float)), cudaMemcpyHostToDevice); 
+  // the second thing to do would be to copy the input array over into the gpu 2's memory
+  cudaMemcpy(d_in_2, h_input, half_array_bytes, cudaMemcpyHostToDevice); 
+ 
+  cudaSetDevice(0); 
+  //copy the other half of the input array over onto the first device
+  cudaMemcpy(d_in_1, &h_input[half_size], half_array_bytes, cudaMemcpyHostToDevice);
   long long host_to_device_time = stop_timer(host_to_device_start_time, "GPU Memory Copy to Device");
 
   // time how long it takes for the kernel to run
@@ -171,16 +190,20 @@ int main (int argc, char **argv)
   // now I think I'm ready to launch the kernel on the GPU
   // my original call was faulty since I can't run more than 1024 threads per block!
   
-  sine_parallel<<<32768, 512>>>(d_in, d_out);
+  sine_parallel<<<65535, 1024>>>(d_in_1, d_out_1);
+  // also run the kernel on the second device
+  cudaSetDevice(1);
+  sine_parallel<<<65535, 1024>>>(d_in_2, d_out_2);
+
   // checking to see that there were no errors with the kernel parameters when it got launched
   long long kernel_time = stop_timer(kernel_start_time, "GPU Kernel Run Time");
-  // checking to see that there were no errors with the kernel parameters when it got launched
-  checkErrors("");
 
   // time how long it takes to copy the results on the GPU back onto the CPU
   long long device_to_host_start_time = start_timer(); 
-  // now copy the results on the GPU memory to CPU memory
-  cudaMemcpy(h_gpu_result, d_out, (N*sizeof(float)), cudaMemcpyDeviceToHost); 
+  // now copy the results on GPU 2's memory to CPU memory
+  cudaMemcpy(h_gpu_result, d_out_2, half_array_bytes, cudaMemcpyDeviceToHost); 
+  // now copy the results on GPU 1's memory to CPU memory
+  cudaMemcpy(&h_gpu_result[half_size], d_out_1, half_array_bytes, cudaMemcpyDeviceToHost);
   long long device_to_host_time = stop_timer(device_to_host_start_time, "GPU Memory Copy to Host");
   
   // get the total time on the GPU
@@ -204,8 +227,11 @@ int main (int argc, char **argv)
   free(h_gpu_result);
 
   // make sure to free the memory on the GPU too!
-  cudaFree(d_in);
-  cudaFree(d_out);
+  cudaFree(d_in_1);
+  cudaFree(d_out_1);
+  cudaFree(d_in_2);
+  cudaFree(d_out_2);
+
   return 0;
 }
 
